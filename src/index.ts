@@ -2,11 +2,14 @@ import dotenv from "dotenv"
 import express, { Request } from "express";
 import authorizedRoute from "./middleware/authorizedRoute";
 import generateToken from "./utils/generateToken";
+import cookieParser from "cookie-parser"
+import verifyToken from "./utils/verifyToken";
 const app = express();
 
 dotenv.config()
 
 app.use(express.json())
+app.use(cookieParser(process.env.COOKIE_SECRET))
 
 const users = [
   {
@@ -43,8 +46,20 @@ app.post("/login", (req: Request<{}, {}, { username: string, password: string }>
   const user = users.find(user => user.username === req.body.username && user.password === req.body.password)
   if (!user) {
     return res.status(401).json({ success: false, message: "Invalid username or password" })
-  }  
-  return res.status(200).json({ success: true, token: generateToken(user) })
+  }
+  const claims = { username: user.username }
+  return res.status(200).json({ success: true, token: generateToken(claims) })
+})
+
+app.post("/refresh", authorizedRoute, (req, res) => {
+  const refreshToken = req.cookies["refresh-token"]
+  if (!refreshToken || !verifyToken(refreshToken, true)) {
+    return res.status(400).json({ success: false, message: "Invalid refresh token" })
+  }
+  //@ts-ignore
+  const claims = { username: req.user.username}
+  const { auth } = generateToken(claims)
+  return res.json({ success: true, token: { auth } })
 })
 
 app.listen(process.env.PORT, () =>
