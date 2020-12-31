@@ -34,7 +34,7 @@ app.get("/", (_req, res) => {
   return res.send("Welcome to public area");
 });
 
-app.get("/private", authorizedRoute, (req, res) => {
+app.get("/private", authorizedRoute(), (req, res) => {
   console.log("Private area accessed by member:")
   //@ts-ignore
   console.log(req.user)
@@ -51,7 +51,9 @@ app.post("/login", (req: Request<{}, {}, { username: string, password: string }>
   return res.status(200).json({ success: true, token: generateToken(claims) })
 })
 
-app.post("/refresh", authorizedRoute, (req, res) => {
+app.post("/refresh", authorizedRoute({ignoreExpiredTokens: true}), (req, res) => {
+  console.log(req.signedCookies)
+  console.log(req.cookies)
   const refreshToken = req.cookies["refresh-token"]
   if (!refreshToken || !verifyToken(refreshToken, true)) {
     return res.status(400).json({ success: false, message: "Invalid refresh token" })
