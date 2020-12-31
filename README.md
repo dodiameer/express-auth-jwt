@@ -11,3 +11,4 @@ Simple JWT auth with Express and In-memory user storage for minimal dependencies
 1. If access token expires before renewing it, the refresh token is effectively also useless as it can't be used to refresh the access token (See [Issue #2])
 2. No explicit token invalidation (Left to user, specific to database and implementation)
 
+[Issue #2]: https://github.com/dodiameer/express-auth-jwt/issues/2
